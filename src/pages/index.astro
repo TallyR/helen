@@ -1,0 +1,364 @@
+---
+const todos = [
+  { text: 'Wake up', done: true },
+  { text: 'Be cute', done: true },
+  { text: 'Have a great day', done: false },
+  { text: 'Smile at least once', done: false },
+];
+---
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Good morning, Helen</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>☀️</text></svg>" />
+    <style>
+      :root {
+        --bg: #ffffff;
+        --sidebar: #f7f7f5;
+        --text: #37352f;
+        --muted: #787774;
+        --faint: #9b9a97;
+        --hover: rgba(55, 53, 47, 0.06);
+        --border: rgba(55, 53, 47, 0.09);
+        --callout: #fbf3db;
+        --tag-pink: #f5e0e9;
+        --tag-pink-text: #4c2337;
+        --tag-yellow: #fbf3db;
+        --tag-yellow-text: #402c1b;
+        --check: #2383e2;
+        color-scheme: light;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #191919;
+          --sidebar: #202020;
+          --text: rgba(255, 255, 255, 0.81);
+          --muted: rgba(255, 255, 255, 0.46);
+          --faint: rgba(255, 255, 255, 0.28);
+          --hover: rgba(255, 255, 255, 0.055);
+          --border: rgba(255, 255, 255, 0.09);
+          --callout: #3a3122;
+          --tag-pink: #4e2c3c;
+          --tag-pink-text: #f0d5e2;
+          --tag-yellow: #564328;
+          --tag-yellow-text: #f5e5c8;
+          color-scheme: dark;
+        }
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+        font-size: 16px;
+        line-height: 1.5;
+        display: flex;
+        min-height: 100vh;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* Sidebar */
+      aside {
+        width: 240px;
+        flex-shrink: 0;
+        background: var(--sidebar);
+        padding: 12px 8px;
+        font-size: 14px;
+        color: var(--muted);
+        position: sticky;
+        top: 0;
+        height: 100vh;
+      }
+      .workspace {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 4px 8px;
+        margin-bottom: 12px;
+        color: var(--text);
+        font-weight: 500;
+      }
+      .workspace .avatar {
+        width: 22px;
+        height: 22px;
+        border-radius: 4px;
+        background: #e9a0c0;
+        color: #fff;
+        display: grid;
+        place-items: center;
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .nav-label {
+        font-size: 12px;
+        font-weight: 500;
+        padding: 12px 8px 4px;
+        color: var(--faint);
+      }
+      .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 3px 8px;
+        border-radius: 6px;
+        cursor: default;
+      }
+      .nav-item:hover { background: var(--hover); }
+      .nav-item.active { background: var(--hover); color: var(--text); font-weight: 500; }
+
+      /* Main */
+      main { flex: 1; min-width: 0; }
+      .topbar {
+        height: 45px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 12px;
+        font-size: 14px;
+        position: sticky;
+        top: 0;
+        background: var(--bg);
+        z-index: 2;
+      }
+      .crumbs { display: flex; align-items: center; gap: 4px; color: var(--muted); }
+      .crumbs span { padding: 2px 6px; border-radius: 4px; }
+      .crumbs .current { color: var(--text); }
+      .topbar-actions { display: flex; gap: 4px; color: var(--muted); }
+      .topbar-actions span { padding: 2px 8px; border-radius: 4px; }
+      .topbar-actions span:hover, .crumbs span:hover { background: var(--hover); }
+
+      .cover {
+        height: 30vh;
+        max-height: 280px;
+        min-height: 160px;
+        background:
+          radial-gradient(circle at 20% 40%, #ffd6a5 0%, transparent 45%),
+          radial-gradient(circle at 75% 30%, #ffadc6 0%, transparent 50%),
+          radial-gradient(circle at 55% 90%, #fdffb6 0%, transparent 45%),
+          linear-gradient(120deg, #ffc8dd, #ffe5b4);
+      }
+
+      .page {
+        max-width: 708px;
+        margin: 0 auto;
+        padding: 0 24px 30vh;
+      }
+      .icon {
+        font-size: 78px;
+        line-height: 1;
+        margin-top: -42px;
+        position: relative;
+        width: fit-content;
+      }
+      h1.title {
+        font-size: 40px;
+        font-weight: 700;
+        line-height: 1.2;
+        margin: 24px 0 16px;
+        letter-spacing: -0.01em;
+      }
+
+      /* Properties */
+      .props { margin-bottom: 16px; font-size: 14px; }
+      .prop {
+        display: flex;
+        align-items: center;
+        min-height: 34px;
+        border-radius: 4px;
+      }
+      .prop-name {
+        width: 160px;
+        flex-shrink: 0;
+        color: var(--muted);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 0 6px;
+      }
+      .prop-value { padding: 0 6px; display: flex; gap: 6px; flex-wrap: wrap; }
+      .tag {
+        padding: 0 6px;
+        border-radius: 3px;
+        font-size: 14px;
+        line-height: 20px;
+      }
+      .tag.pink { background: var(--tag-pink); color: var(--tag-pink-text); }
+      .tag.yellow { background: var(--tag-yellow); color: var(--tag-yellow-text); }
+
+      hr { border: 0; border-top: 1px solid var(--border); margin: 12px 0; }
+
+      /* Blocks */
+      .callout {
+        display: flex;
+        gap: 10px;
+        padding: 16px 16px 16px 12px;
+        border-radius: 4px;
+        background: var(--callout);
+        margin: 16px 0;
+      }
+      .callout .emoji { font-size: 22px; line-height: 1.2; }
+      .callout p { margin: 0; font-size: 18px; font-weight: 600; }
+
+      h2 { font-size: 24px; font-weight: 600; margin: 32px 0 4px; line-height: 1.3; }
+      p { margin: 4px 0; }
+
+      .todo {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 3px 2px;
+        cursor: pointer;
+        user-select: none;
+      }
+      .todo input {
+        appearance: none;
+        width: 16px;
+        height: 16px;
+        margin: 0;
+        border: 1.5px solid var(--text);
+        border-radius: 2px;
+        cursor: pointer;
+        flex-shrink: 0;
+        display: grid;
+        place-items: center;
+      }
+      .todo input:checked { background: var(--check); border-color: var(--check); }
+      .todo input:checked::after {
+        content: "";
+        width: 4px;
+        height: 8px;
+        border: solid #fff;
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg) translate(-1px, -1px);
+      }
+      .todo input:checked + span { color: var(--faint); text-decoration: line-through; }
+
+      blockquote {
+        margin: 12px 0;
+        padding: 3px 14px;
+        border-left: 3px solid currentColor;
+        font-size: 18px;
+      }
+
+      details { margin: 4px 0; }
+      summary {
+        list-style: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 3px 2px;
+        border-radius: 4px;
+      }
+      summary::-webkit-details-marker { display: none; }
+      summary::before {
+        content: "▶";
+        font-size: 10px;
+        color: var(--text);
+        transition: transform 0.15s;
+        width: 16px;
+        text-align: center;
+      }
+      details[open] summary::before { transform: rotate(90deg); }
+      summary:hover { background: var(--hover); }
+      details > div { padding-left: 26px; }
+
+      .footer { color: var(--faint); font-size: 14px; margin-top: 40px; }
+
+      @media (max-width: 800px) {
+        aside { display: none; }
+        .topbar-actions { display: none; }
+        .prop-name { width: 110px; }
+        h1.title { font-size: 32px; }
+      }
+    </style>
+  </head>
+  <body>
+    <aside>
+      <div class="workspace"><div class="avatar">H</div>Helen's Space</div>
+      <div class="nav-item">🔍 Search</div>
+      <div class="nav-item">🏠 Home</div>
+      <div class="nav-item">📥 Inbox</div>
+      <div class="nav-label">Private</div>
+      <div class="nav-item active">☀️ Good morning, Helen</div>
+      <div class="nav-item">📓 Journal</div>
+      <div class="nav-item">🌷 Things I love</div>
+      <div class="nav-item">✈️ Travel plans</div>
+    </aside>
+
+    <main>
+      <div class="topbar">
+        <div class="crumbs">
+          <span>Private</span>/<span class="current">☀️ Good morning, Helen</span>
+        </div>
+        <div class="topbar-actions">
+          <span>Share</span><span>☆</span><span>···</span>
+        </div>
+      </div>
+
+      <div class="cover"></div>
+
+      <article class="page">
+        <div class="icon">☀️</div>
+        <h1 class="title">Good morning, Helen</h1>
+
+        <div class="props">
+          <div class="prop">
+            <div class="prop-name">📅 Date</div>
+            <div class="prop-value" id="today">Today</div>
+          </div>
+          <div class="prop">
+            <div class="prop-name">🏷️ Tags</div>
+            <div class="prop-value">
+              <span class="tag pink">cute</span>
+              <span class="tag yellow">sunshine</span>
+            </div>
+          </div>
+          <div class="prop">
+            <div class="prop-name">💭 Mood</div>
+            <div class="prop-value">Wonderful</div>
+          </div>
+        </div>
+
+        <hr />
+
+        <div class="callout">
+          <div class="emoji">💖</div>
+          <p>You are cute Helen good morning!</p>
+        </div>
+
+        <h2>Today's to-do</h2>
+        {todos.map((t) => (
+          <label class="todo">
+            <input type="checkbox" checked={t.done} />
+            <span>{t.text}</span>
+          </label>
+        ))}
+
+        <h2>A little note</h2>
+        <blockquote>Hope your coffee is warm and your day is kind to you.</blockquote>
+
+        <details>
+          <summary>Open for a surprise</summary>
+          <div><p>🌸 Someone is thinking about you right now.</p></div>
+        </details>
+
+        <p class="footer">Last edited just now</p>
+      </article>
+    </main>
+
+    <script>
+      const el = document.getElementById('today');
+      if (el) {
+        el.textContent = new Date().toLocaleDateString(undefined, {
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric',
+        });
+      }
+    </script>
+  </body>
+</html>
