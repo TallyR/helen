@@ -266,6 +266,40 @@ const todos = [
       summary:hover { background: var(--hover); }
       details > div { padding-left: 26px; }
 
+      /* Messages */
+      .messages summary { font-size: 24px; font-weight: 600; margin: 32px 0 4px; }
+      .msg-form { display: flex; gap: 8px; margin: 8px 0 12px; }
+      .msg-form input {
+        flex: 1;
+        min-width: 0;
+        font: inherit;
+        color: inherit;
+        background: transparent;
+        border: 0;
+        border-bottom: 1px solid var(--border);
+        padding: 6px 2px;
+        outline: none;
+      }
+      .msg-form input::placeholder { color: var(--faint); }
+      .msg-form input:focus { border-bottom-color: var(--check); }
+      .msg-form button {
+        font: inherit;
+        font-size: 14px;
+        font-weight: 500;
+        padding: 4px 12px;
+        border-radius: 6px;
+        border: 0;
+        background: var(--check);
+        color: #fff;
+        cursor: pointer;
+      }
+      .msg-form button:disabled { opacity: 0.5; cursor: default; }
+      .msg-status { font-size: 14px; color: var(--faint); min-height: 21px; }
+      .msg-list { list-style: none; margin: 0; padding: 0; }
+      .msg-list li { padding: 8px 2px; border-top: 1px solid var(--border); }
+      .msg-list p { margin: 0 0 2px; white-space: pre-wrap; overflow-wrap: anywhere; }
+      .msg-list time { font-size: 12px; color: var(--faint); }
+
       .footer { color: var(--faint); font-size: 14px; margin-top: 40px; }
 
       @media (max-width: 800px) {
@@ -346,9 +380,86 @@ const todos = [
           <div><p>🌸 Someone is thinking about you right now.</p></div>
         </details>
 
+        <details id="messages" class="messages">
+          <summary>💬 Messages</summary>
+          <div>
+            <form id="msg-form" class="msg-form">
+              <input id="msg-input" type="text" placeholder="Write something for Helen…" maxlength="500" autocomplete="off" required />
+              <button type="submit">Send</button>
+            </form>
+            <div id="msg-status" class="msg-status"></div>
+            <ul id="msg-list" class="msg-list"></ul>
+          </div>
+        </details>
+
         <p class="footer">Last edited just now</p>
       </article>
     </main>
+
+    <script>
+      const details = document.getElementById('messages') as HTMLDetailsElement;
+      const form = document.getElementById('msg-form') as HTMLFormElement;
+      const input = document.getElementById('msg-input') as HTMLInputElement;
+      const button = form.querySelector('button') as HTMLButtonElement;
+      const status = document.getElementById('msg-status') as HTMLElement;
+      const list = document.getElementById('msg-list') as HTMLUListElement;
+
+      function renderMessage(m: { id: number; created_at: string; message: string | null }) {
+        const li = document.createElement('li');
+        const text = document.createElement('p');
+        text.textContent = m.message ?? '';
+        const time = document.createElement('time');
+        time.dateTime = m.created_at;
+        time.textContent = new Date(m.created_at).toLocaleString(undefined, {
+          month: 'short',
+          day: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+        });
+        li.append(text, time);
+        return li;
+      }
+
+      async function loadMessages() {
+        status.textContent = 'Loading…';
+        try {
+          const res = await fetch('/api/messages');
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error);
+          status.textContent = data.length ? '' : 'No messages yet. Be the first!';
+          list.replaceChildren(...data.map(renderMessage));
+        } catch (err) {
+          status.textContent = `Couldn't load messages: ${(err as Error).message}`;
+        }
+      }
+
+      // Pull messages every time the section is opened
+      details.addEventListener('toggle', () => {
+        if (details.open) loadMessages();
+      });
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const message = input.value.trim();
+        if (!message) return;
+        button.disabled = true;
+        status.textContent = 'Sending…';
+        try {
+          const res = await fetch('/api/messages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message }),
+          });
+          if (!res.ok) throw new Error((await res.json()).error);
+          input.value = '';
+          await loadMessages();
+        } catch (err) {
+          status.textContent = `Couldn't send: ${(err as Error).message}`;
+        } finally {
+          button.disabled = false;
+        }
+      });
+    </script>
 
     <script>
       const el = document.getElementById('today');
