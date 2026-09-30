@@ -200,9 +200,9 @@ import Shell from '../layouts/Shell.astro';
 <!-- Global because the message rows are created in JS and wouldn't get scoped classes -->
 <style is:global>
   .chat {
-    flex: 1;
     display: flex;
     flex-direction: column;
+    /* Fixed height so the history scrolls inside it instead of the page growing */
     height: calc(100dvh - 45px);
     width: 100%;
     max-width: 760px;
@@ -235,6 +235,7 @@ import Shell from '../layouts/Shell.astro';
   /* History */
   .history {
     flex: 1;
+    min-height: 0; /* lets a flex child shrink below its content so overflow can scroll */
     overflow-y: auto;
     padding: 8px 0 12px;
     display: flex;
@@ -341,4 +342,8 @@ import Shell from '../layouts/Shell.astro';
   }
   .composer button:disabled { opacity: 0.5; cursor: default; }
   .error { margin: 6px 0 0; font-size: 13px; color: #d33; }
+
+  @media (max-width: 520px) {
+    .legend { display: none; } /* doesn't fit next to the header on phones */
+  }
 </style>
